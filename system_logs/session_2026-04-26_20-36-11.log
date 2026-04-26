@@ -1,0 +1,26 @@
+20:36:11 | INFO     | [MainThread] ==================================================
+20:36:11 | INFO     | [MainThread] ЗАПУСК СИСТЕМЫ AI VISION
+20:36:11 | INFO     | [MainThread] Устройство: cpu
+20:36:11 | INFO     | [MainThread] ==================================================
+20:36:11 | INFO     | [MainThread] --- ЗАПУСК ОБУЧЕНИЯ ДЛЯ ЗАДАЧИ: CLASSIFICATION ---
+20:36:11 | INFO     | [MainThread] Датасет инициализирован. Найдено классов: 1 ['CAT']
+20:36:11 | INFO     | [MainThread] Общее количество изображений: 5
+20:36:11 | INFO     | [MainThread] Создание архитектуры ResNet18 для 1 классов...
+20:36:11 | INFO     | [MainThread] Эпоха [1/15] | Loss: 0.0000 | Val Acc: 100.00% | Время: 0.2с
+20:36:11 | INFO     | [MainThread] >>>> Модель сохранена как лучшая!
+20:36:11 | INFO     | [MainThread] Эпоха [2/15] | Loss: 0.0000 | Val Acc: 100.00% | Время: 0.1с
+20:36:11 | INFO     | [MainThread] Эпоха [3/15] | Loss: 0.0000 | Val Acc: 100.00% | Время: 0.1с
+20:36:11 | INFO     | [MainThread] Эпоха [4/15] | Loss: 0.0000 | Val Acc: 100.00% | Время: 0.1с
+20:36:11 | INFO     | [MainThread] Эпоха [5/15] | Loss: 0.0000 | Val Acc: 100.00% | Время: 0.1с
+20:36:12 | INFO     | [MainThread] Эпоха [6/15] | Loss: 0.0000 | Val Acc: 100.00% | Время: 0.1с
+20:36:12 | INFO     | [MainThread] Эпоха [7/15] | Loss: 0.0000 | Val Acc: 100.00% | Время: 0.1с
+20:36:12 | INFO     | [MainThread] Эпоха [8/15] | Loss: 0.0000 | Val Acc: 100.00% | Время: 0.1с
+20:36:12 | INFO     | [MainThread] Эпоха [9/15] | Loss: 0.0000 | Val Acc: 100.00% | Время: 0.1с
+20:36:12 | INFO     | [MainThread] Эпоха [10/15] | Loss: 0.0000 | Val Acc: 100.00% | Время: 0.1с
+20:36:12 | INFO     | [MainThread] Эпоха [11/15] | Loss: 0.0000 | Val Acc: 100.00% | Время: 0.1с
+20:36:12 | INFO     | [MainThread] Эпоха [12/15] | Loss: 0.0000 | Val Acc: 100.00% | Время: 0.1с
+20:36:12 | INFO     | [MainThread] Эпоха [13/15] | Loss: 0.0000 | Val Acc: 100.00% | Время: 0.1с
+20:36:12 | INFO     | [MainThread] Эпоха [14/15] | Loss: 0.0000 | Val Acc: 100.00% | Время: 0.1с
+20:36:13 | INFO     | [MainThread] Эпоха [15/15] | Loss: 0.0000 | Val Acc: 100.00% | Время: 0.1с
+20:36:13 | INFO     | [MainThread] Обучение успешно завершено.
+20:36:13 | INFO     | [MainThread] Сессия завершена.
