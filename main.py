@@ -1,12 +1,3 @@
-"""
-================================================================================
-PROJECT: PROFESSIONAL COMPUTER VISION MULTI-TOOL (ULTRA EDITION)
-VERSION: 3.0
-DEVELOPER: AI COLLABORATOR (GEMINI)
-FEATURES: Image Classification, License Plate OCR, Mask Detection, Advanced Analytics
-================================================================================
-"""
-
 import os
 import sys
 import time
@@ -22,63 +13,46 @@ import easyocr
 import matplotlib.pyplot as plt
 from datetime import datetime
 from typing import List, Tuple, Dict, Any, Union
-
-# Библиотеки нейросетей
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader, random_split
 from torchvision import models, transforms
 from PIL import Image, ImageFile, ImageDraw, ImageFont
 
-# Метрики
 try:
     from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
     HAS_SKLEARN = True
 except ImportError:
     HAS_SKLEARN = False
 
-# Позволяем загрузку "битых" или неполных изображений
+
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-# ==============================================================================
-# 1. ГЛОБАЛЬНАЯ КОНФИГУРАЦИЯ (GLOBAL CONFIG)
-# ==============================================================================
-
 class GlobalConfig:
-    """Хранилище всех гиперпараметров и настроек путей."""
-    # Параметры обучения
     IMG_SIZE = 224
     BATCH_SIZE = 8
     EPOCHS = 15
     LEARNING_RATE = 0.001
     VAL_SPLIT = 0.2
     
-    # Железо
+
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
-    # Пути
+
     LOG_DIR = "system_logs"
     MODEL_DIR = "saved_models"
     EXPORT_DIR = "reports"
     
-    # Названия файлов
     CAT_DOG_MODEL = "classification_best.pth"
     MASK_MODEL = "mask_detector.pth"
     CLASSES_FILE = "label_map.json"
 
     @classmethod
     def initialize_env(cls):
-        """Создает структуру папок при запуске."""
         for folder in [cls.LOG_DIR, cls.MODEL_DIR, cls.EXPORT_DIR]:
             if not os.path.exists(folder):
                 os.makedirs(folder)
 
-# ==============================================================================
-# 2. ПРОФЕССИОНАЛЬНОЕ ЛОГИРОВАНИЕ
-# ==============================================================================
-
 def setup_master_logger():
-    """Настройка логгера с выводом в консоль и файл."""
     GlobalConfig.initialize_env()
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     log_path = os.path.join(GlobalConfig.LOG_DIR, f"session_{timestamp}.log")
@@ -86,17 +60,14 @@ def setup_master_logger():
     logger = logging.getLogger("CV_Master")
     logger.setLevel(logging.INFO)
 
-    # Красивый формат
     formatter = logging.Formatter(
         '%(asctime)s | %(levelname)-8s | [%(threadName)s] %(message)s',
         datefmt='%H:%M:%S'
     )
 
-    # Консоль
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(formatter)
 
-    # Файл
     file_handler = logging.FileHandler(log_path, encoding='utf-8')
     file_handler.setFormatter(formatter)
 
@@ -106,15 +77,7 @@ def setup_master_logger():
 
 log = setup_master_logger()
 
-# ==============================================================================
-# 3. УМНЫЙ ЗАГРУЗЧИК ДАННЫХ (SMART DATA LOADER)
-# ==============================================================================
-
 class MasterDataset(Dataset):
-    """
-    Класс для работы с изображениями. 
-    Автоматически фильтрует мусор и ищет классы.
-    """
     def __init__(self, root_path: str, transform: transforms.Compose = None):
         self.root = root_path
         self.transform = transform
@@ -125,11 +88,9 @@ class MasterDataset(Dataset):
             log.error(f"Путь {root_path} не найден! Проверь расположение папки.")
             return
 
-        # Фильтр системных папок
         exclude = [GlobalConfig.LOG_DIR, GlobalConfig.MODEL_DIR, GlobalConfig.EXPORT_DIR, 
                    '__pycache__', '.ipynb_checkpoints', '.git', '.vscode']
 
-        # Поиск классов (папок с картинками)
         potential_classes = [d for d in os.listdir(root_path) 
                              if os.path.isdir(os.path.join(root_path, d)) and d not in exclude]
         
@@ -154,7 +115,6 @@ class MasterDataset(Dataset):
     def __getitem__(self, idx: int):
         path, label = self.samples[idx]
         try:
-            # Используем Pillow для корректного чтения EXIF и каналов
             with open(path, 'rb') as f:
                 img = Image.open(f).convert('RGB')
             
@@ -166,24 +126,16 @@ class MasterDataset(Dataset):
             # Возвращаем следующий элемент в случае ошибки
             return self.__getitem__((idx + 1) % len(self.samples))
 
-# ==============================================================================
-# 4. ФАБРИКА МОДЕЛЕЙ (MODEL FACTORY)
-# ==============================================================================
-
 class ModelFactory:
-    """Создает и настраивает архитектуры нейросетей."""
     
     @staticmethod
     def get_classification_model(num_classes: int):
-        """Создает ResNet18 с модифицированным выходным слоем."""
         log.info(f"Создание архитектуры ResNet18 для {num_classes} классов...")
         model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
         
-        # Замораживаем веса (Transfer Learning)
         for param in model.parameters():
             param.requires_grad = False
             
-        # Настраиваем финальный классификатор
         in_features = model.fc.in_features
         model.fc = nn.Sequential(
             nn.Linear(in_features, 512),
@@ -195,7 +147,6 @@ class ModelFactory:
 
     @staticmethod
     def get_transforms(is_train: bool = True):
-        """Возвращает набор трансформаций (Augmentation vs Validation)."""
         if is_train:
             return transforms.Compose([
                 transforms.Resize((GlobalConfig.IMG_SIZE, GlobalConfig.IMG_SIZE)),
@@ -212,12 +163,7 @@ class ModelFactory:
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
             ])
 
-# ==============================================================================
-# 5. ДВИЖОК ОБУЧЕНИЯ (TRAINING ENGINE)
-# ==============================================================================
-
 class CoreEngine:
-    """Ядро обучения, валидации и сохранения результатов."""
     
     def __init__(self, task_name: str):
         self.task = task_name
@@ -225,37 +171,31 @@ class CoreEngine:
 
     def train_process(self, dataset_path: str):
         log.info(f"--- ЗАПУСК ОБУЧЕНИЯ ДЛЯ ЗАДАЧИ: {self.task.upper()} ---")
-        
-        # Подготовка данных
+
         full_dataset = MasterDataset(dataset_path)
         if len(full_dataset) < 2:
             log.error("КРИТИЧЕСКАЯ ОШИБКА: Недостаточно данных для обучения! Нужно минимум 2 класса по несколько фото.")
             self._print_troubleshooting()
             return
 
-        # Фикс ошибки ValueError: num_samples=0
         train_len = int((1 - GlobalConfig.VAL_SPLIT) * len(full_dataset))
         val_len = len(full_dataset) - train_len
         if val_len == 0: train_len, val_len = len(full_dataset)-1, 1
 
         train_set, val_set = random_split(full_dataset, [train_len, val_len])
         
-        # Применяем разные трансформации
         train_set.dataset.transform = ModelFactory.get_transforms(is_train=True)
         val_set.dataset.transform = ModelFactory.get_transforms(is_train=False)
 
         train_loader = DataLoader(train_set, batch_size=GlobalConfig.BATCH_SIZE, shuffle=True)
         val_loader = DataLoader(val_set, batch_size=GlobalConfig.BATCH_SIZE)
 
-        # Модель
         model = ModelFactory.get_classification_model(len(full_dataset.class_names))
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(model.fc.parameters(), lr=GlobalConfig.LEARNING_RATE)
 
-        # Сохраняем карту классов
         self._save_labels(full_dataset.class_names)
 
-        # Цикл обучения
         best_acc = 0.0
         for epoch in range(GlobalConfig.EPOCHS):
             t0 = time.time()
@@ -272,7 +212,6 @@ class CoreEngine:
                 optimizer.step()
                 running_loss += loss.item()
 
-            # Валидация
             val_acc = self._evaluate(model, val_loader)
             self.history['loss'].append(running_loss / len(train_loader))
             self.history['val_acc'].append(val_acc)
@@ -330,18 +269,12 @@ class CoreEngine:
         """
         print(textwrap.dedent(msg))
 
-# ==============================================================================
-# 6. ИНФЕРЕНС И OCR (INFERENCE & OCR)
-# ==============================================================================
-
 class InferenceUnit:
-    """Модуль для работы с готовыми моделями и OCR."""
 
     @staticmethod
     def classify_image(img_path: str):
         log.info(f"Анализ изображения: {img_path}")
         
-        # Загрузка меток
         try:
             with open(os.path.join(GlobalConfig.MODEL_DIR, GlobalConfig.CLASSES_FILE), 'r') as f:
                 classes = json.load(f)
@@ -349,12 +282,10 @@ class InferenceUnit:
             log.error("Файл меток не найден! Сначала обучи модель.")
             return
 
-        # Загрузка модели
         model = ModelFactory.get_classification_model(len(classes))
         model.load_state_dict(torch.load(os.path.join(GlobalConfig.MODEL_DIR, GlobalConfig.CAT_DOG_MODEL), map_location=GlobalConfig.DEVICE))
         model.eval()
 
-        # Подготовка фото
         img_pil = Image.open(img_path).convert('RGB')
         transform = ModelFactory.get_transforms(is_train=False)
         tensor = transform(img_pil).unsqueeze(0).to(GlobalConfig.DEVICE)
@@ -367,7 +298,6 @@ class InferenceUnit:
         res_text = f"Результат: {classes[pred.item()]} ({conf.item()*100:.1f}%)"
         log.info(res_text)
 
-        # Визуализация
         plt.imshow(img_pil)
         plt.title(res_text)
         plt.axis('off')
@@ -375,23 +305,17 @@ class InferenceUnit:
 
     @staticmethod
     def license_plate_ocr(img_path: str):
-        """Интеллектуальное распознавание текста с OpenCV препроцессингом."""
         log.info(f"Запуск OCR-модуля для: {img_path}")
         
-        # Читаем OpenCV
         img = cv2.imread(img_path)
         if img is None:
             log.error("Не удалось открыть файл изображения!")
             return
 
-        # Улучшение изображения (Preprocessing)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        # Убираем шумы
         noise_removed = cv2.bilateralFilter(gray, 11, 17, 17)
-        # Адаптивный порог для четкости текста
         thresh = cv2.adaptiveThreshold(noise_removed, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
 
-        # OCR
         reader = easyocr.Reader(['en', 'ru'], gpu=torch.cuda.is_available())
         results = reader.readtext(thresh)
 
@@ -399,7 +323,6 @@ class InferenceUnit:
         for (bbox, text, prob) in results:
             log.info(f" >> Текст: '{text}' (Уверенность: {prob:.2f})")
             
-            # Рисуем рамку
             p1 = tuple(map(int, bbox[0]))
             p2 = tuple(map(int, bbox[2]))
             cv2.rectangle(img, p1, p2, (0, 255, 0), 2)
@@ -408,10 +331,6 @@ class InferenceUnit:
         cv2.imshow("OCR Result (Press any key)", img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-
-# ==============================================================================
-# 7. ГЛАВНЫЙ ВХОД (CLI ENTRY POINT)
-# ==============================================================================
 
 def main():
     parser = argparse.ArgumentParser(description="AI Computer Vision Tool v3.0")
@@ -424,7 +343,6 @@ def main():
     
     args = parser.parse_args()
 
-    # Инициализация среды
     GlobalConfig.initialize_env()
     
     log.info("="*50)
@@ -445,7 +363,6 @@ def main():
 
         elif args.task == 'masks':
             if args.mode == 'train':
-                # Для масок используем тот же движок, просто другой датасет
                 engine = CoreEngine("MaskDetection")
                 engine.train_process(args.dataset)
             else:
