@@ -123,7 +123,6 @@ class MasterDataset(Dataset):
             return img, label
         except Exception as e:
             log.warning(f"Ошибка при чтении {path}: {e}. Пропускаем...")
-            # Возвращаем следующий элемент в случае ошибки
             return self.__getitem__((idx + 1) % len(self.samples))
 
 class ModelFactory:
